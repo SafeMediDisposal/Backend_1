@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Medical Waste Detection</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #50C2C9;
+      --primary-dark: #3ba0a6;
+      --primary-light: #7dd3d8;
+      --secondary: #2c8a8f;
+      --accent: #50C2C9;
+      --cyan-50: #ecfeff;
+      --cyan-100: #cffafe;
+      --cyan-200: #a5f3fc;
+      --cyan-500: #50C2C9;
+      --cyan-600: #3ba0a6;
+      --cyan-700: #2c8a8f;
+      --cyan-800: #1f6b70;
+      --cyan-900: #164e52;
+      
+      --white: #ffffff;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      
+      --gradient-primary: linear-gradient(135deg, #50C2C9 0%, #3ba0a6 50%, #2c8a8f 100%);
+      --gradient-secondary: linear-gradient(135deg, #2c8a8f 0%, #164e52 100%);
+      --gradient-light: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--gradient-light);
+      min-height: 100vh;
+      padding: 2rem;
+      color: var(--gray-800);
+      line-height: 1.6;
+    }
+
+    /* Header Styles */
+    h1 {
+      background: var(--gradient-primary);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      margin-bottom: 2rem;
+      text-align: center;
+      position: relative;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 4px;
+      background: var(--gradient-primary);
+      border-radius: 2px;
+    }
+
+    /* Control Buttons */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    input[type="file"], button {
+      margin: 0;
+      padding: 0.875rem 1.75rem;
+      font-size: 1rem;
+      font-weight: 500;
+      border: none;
+      background: var(--gradient-primary);
+      color: var(--white);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    input[type="file"]::before {
+      content: '📁 Choose Image';
+      display: block;
+    }
+
+    button:hover, input[type="file"]:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      background: var(--gradient-secondary);
+    }
+
+    button:active, input[type="file"]:active {
+      transform: translateY(0);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Add ripple effect */
+    button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.3s;
+      transform: translate(-50%, -50%);
+    }
+
+    button:active::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    /* Media Elements */
+    .media-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      max-width: 1200px;
+      margin-inline: auto;
+    }
+
+    @media (min-width: 768px) {
+      .media-container {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .media-card {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--cyan-100);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .media-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--gradient-primary);
+    }
+
+    .media-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-2xl);
+    }
+
+    .media-card h3 {
+      color: var(--cyan-700);
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    #preview, #video {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      aspect-ratio: 4 / 3;
+      object-fit: contain;
+      border-radius: 16px;
+      box-shadow: var(--shadow-md);
+      border: 3px solid var(--cyan-100);
+      background: var(--gray-50);
+      transition: all 0.3s ease;
+    }
+
+    #preview:hover, #video:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-lg);
+    }
+
+    #video {
+      display: none;
+    }
+
+    /* Results Section */
+    #results {
+      margin-top: 2rem;
+      padding: 2rem;
+      background: var(--white);
+      border-radius: 24px;
+      box-shadow: var(--shadow-xl);
+      text-align: left;
+      max-width: 900px;
+      margin-inline: auto;
+      border: 1px solid var(--cyan-100);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #results::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: var(--gradient-primary);
+    }
+
+    #results h3 {
+      color: var(--cyan-700);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    #results h3::before {
+      content: '🔍';
+      font-size: 1.2rem;
+    }
+
+    /* Detection Items */
+    .detection {
+      border-bottom: 1px solid var(--cyan-100);
+      padding: 1.5rem 0;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .detection:last-child {
+      border-bottom: none;
+    }
+
+    .detection:hover {
+      background: var(--cyan-50);
+      margin: 0 -1rem;
+      padding: 1.5rem 1rem;
+      border-radius: 12px;
+      transform: translateX(5px);
+    }
+
+    .detection strong {
+      color: var(--primary);
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-transform: capitalize;
+      display: inline-block;
+      margin-bottom: 0.5rem;
+    }
+
+    .detection-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .info-item {
+      background: var(--cyan-50);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+      font-size: 0.9rem;
+      color: var(--gray-700);
+    }
+
+    .info-item strong {
+      color: var(--cyan-700);
+      font-size: 0.9rem;
+      margin-bottom: 0;
+    }
+
+    .confidence {
+      display: inline-block;
+      background: var(--gradient-primary);
+      color: var(--white);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-left: 1rem;
+    }
+
+    /* Loading State */
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--cyan-600);
+      font-size: 1.1rem;
+    }
+
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--cyan-200);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 1s linear infinite;
+      margin-left: 1rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--gray-500);
+    }
+
+    .empty-state::before {
+      content: '🔍';
+      font-size: 3rem;
+      display: block;
+      margin-bottom: 1rem;
+    }
+
+    /* Error State */
+    .error {
+      color: #ef4444;
+      text-align: center;
+      padding: 2rem;
+      background: #fef2f2;
+      border-radius: 12px;
+      border: 1px solid #fecaca;
+    }
+
+    /* Success State */
+    .success {
+      background: var(--cyan-50);
+      border: 1px solid var(--cyan-200);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .success::before {
+      content: '✅ ';
+      color: var(--primary);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      .controls {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      input[type="file"], button {
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .media-card {
+        padding: 1rem;
+      }
+
+      #results {
+        padding: 1.5rem;
+      }
+
+      .detection-info {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .detection {
+        padding: 1rem 0;
+      }
+
+      .detection:hover {
+        margin: 0 -0.5rem;
+        padding: 1rem 0.5rem;
+      }
+    }
+
+    canvas {
+      display: none;
+    }
+
+    /* Add subtle animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .detection {
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    /* Floating elements */
+    .floating {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+  </style>
+</head>
+<body>
+  <h1 class="floating">Medical Waste Detection</h1>
+
+  <div class="controls">
+    <input type="file" id="fileInput" accept="image/*" />
+    <button onclick="startCamera()">📷 Capture via Webcam</button>
+    <button onclick="captureImage()">📸 Capture Image</button>
+  </div>
+
+  <div class="media-container">
+    <div class="media-card">
+      <h3>📷 Camera View</h3>
+      <video id="video" autoplay playsinline></video>
+    </div>
+    <div class="media-card">
+      <h3>🖼️ Image Preview</h3>
+      <img id="preview" src="" alt="Upload an image to see preview" />
+    </div>
+  </div>
+
+  <canvas id="canvas" style="display:none;"></canvas>
+  <div id="results">
+    <div class="empty-state">
+      Upload an image or capture a photo to start detecting medical waste items.
+    </div>
+  </div>
+
+  <div style="text-align: center; margin-top: 2rem;">
+    <a href="gamification.html">
+      <button style="
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        border-radius: 0.5rem;
+        background-color: #0f766e;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background 0.3s ease;
+      ">
+        🎮 View Gamification Results
+      </button>
+    </a>
+  </div>
+
+
+
+<script>
+  const fileInput = document.getElementById('fileInput');
+  const preview = document.getElementById('preview');
+  const results = document.getElementById('results');
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  let stream;
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      const base64Image = reader.result.split(',')[1];
+      preview.src = reader.result;
+      detectWaste(base64Image);
+    };
+
+    if (file) {
+      reader.readAsDataURL(file);
+      results.innerHTML = '<div class="loading">Analyzing image for medical waste...</div>';
+    }
+  });
+
+  function startCamera() {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(s => {
+          stream = s;
+          video.srcObject = stream;
+          video.style.display = "block";
+        })
+        .catch(err => {
+          alert("Could not access webcam: " + err.message);
+        });
+    } else {
+      alert("Webcam not supported on this browser.");
+    }
+  }
+
+  function captureImage() {
+    if (!stream) return alert("Start the camera first.");
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext("2d");
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const dataURL = canvas.toDataURL("image/jpeg");
+    const base64Image = dataURL.split(',')[1];
+    preview.src = dataURL;
+    results.innerHTML = '<div class="loading">Analyzing captured image...</div>';
+    detectWaste(base64Image);
+  }
+
+  function detectWaste(base64Image) {
+    axios({
+      method: "POST",
+      url: "https://serverless.roboflow.com/medical-disposable/3",
+      params: {
+        api_key: "ob0DnZaOXrlnDuwoINcZ"
+      },
+      data: base64Image,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
+    })
+    .then(response => {
+      const predictions = response.data.predictions;
+
+      if (predictions.length === 0) {
+        results.innerHTML = `
+          <div class="success">
+            No medical waste detected in this image.
+          </div>
+        `;
+        return;
+      }
+
+      // Count each item type (gloves, syringe, etc.)
+      const counts = {};
+      predictions.forEach(p => {
+        const item = p.class.toLowerCase();
+        counts[item] = (counts[item] || 0) + 1;
+      });
+
+      // Generate count summary
+      const countSummary = Object.entries(counts)
+        .map(([item, count]) => `<li><strong>${item}:</strong> ${count}</li>`)
+        .join("");
+
+      // Generate details
+      const details = predictions.map(p => `
+        <div class="detection">
+          <strong>${p.class}</strong>
+          <span class="confidence">${(p.confidence * 100).toFixed(1)}% confident</span>
+          <div class="detection-info">
+            <div class="info-item">
+              <strong>Position X:</strong> ${Math.round(p.x)}px
+            </div>
+            <div class="info-item">
+              <strong>Position Y:</strong> ${Math.round(p.y)}px
+            </div>
+            <div class="info-item">
+              <strong>Width:</strong> ${Math.round(p.width)}px
+            </div>
+            <div class="info-item">
+              <strong>Height:</strong> ${Math.round(p.height)}px
+            </div>
+          </div>
+        </div>
+      `).join("");
+
+      sessionStorage.setItem("wasteCounts", JSON.stringify(counts));
+
+      results.innerHTML = `
+        <div class="success">
+          Detected ${predictions.length} item${predictions.length > 1 ? 's' : ''}:
+          <ul style="margin-top: 0.75rem; padding-left: 1.25rem;">${countSummary}</ul>
+        </div>
+        <h3>Detection Results</h3>
+        ${details}
+      `;
+    })
+    .catch(error => {
+      results.innerHTML = `
+        <div class="error">
+          ❌ Error: ${error.message}
+          <br><small>Please try again with a different image.</small>
+        </div>
+      `;
+    });
+  }
+</script>
+
+</body>
+</html>
